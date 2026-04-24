@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Placard de Votações</title>
+<style>
+  /* Barra fixa no topo */
+  header {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 60px;
+    background-color: #4CAF50;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    font-weight: bold;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
+  body {
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* centra verticalmente */
+    align-items: center;     /* centra horizontalmente */
+    min-height: 100vh;       /* altura mínima igual à altura da viewport */
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f9f9f9;
+  }
+  #main-container {
+    max-width: 500px;
+    width: 90%;
+  }
+  h1  { 
+    text-align: center; 
+    margin-bottom: 75px;
+  } 
+  h2 { text-align: center; }
+  #addOptionContainer {
+    display: flex;
+    margin-bottom: 15px;
+    gap: 10px;
+  }
+  #addOptionInput {
+    flex-grow: 1;
+    font-size: 16px;
+    padding: 8px;
+  }
+  button, input[type="text"] {
+    font-size: 14px;
+    padding: 8px 12px;
+    cursor: pointer;
+  }
+  #optionsContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .vote-button {
+    background-color: gray;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    font-size: 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    user-select: none;
+    transition: background-color 0.2s ease;
+    text-align: left;
+  }
+  .vote-button:hover {
+    background-color: #45a049;
+  }
+  .remove-btn {
+    background-color: #e74c3c;
+    border: none;
+    color: white;
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 3px 7px;
+    margin-left: 5px;
+    font-size: 12px;
+    vertical-align: middle;
+  }
+  .remove-btn:hover {
+    background-color: #c0392b;
+  }
+  #clearVotesBtn {
+    display: block;
+    margin: 0 auto 20px auto;
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #f39c12;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  #clearVotesBtn:hover {
+    background-color: #d68910;
+  }
+  #results {
+    margin-top: 20px;
+  }
+  .result-item {
+    display: flex;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .result-label {
+    flex: 1;
+    font-weight: normal;
+    user-select: none;
+  }
+  .result-label.highlight {
+    font-weight: bold;
+    color: #d35400;
+  }
+  .bar-container {
+    flex: 2;
+    background: #eee;
+    height: 24px;
+    border-radius: 10px;
+    overflow: hidden;
+    margin-left: 15px;
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+  .bar-fill {
+    height: 100%;
+    background-color: #4CAF50;
+    transition: width 0.3s ease;
+    color: white;
+    font-weight: bold;
+    padding-right: 8px;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    white-space: nowrap;
+  }
+  .bar-fill.highlight {
+    background-color: #d35400;
+  }
+  .percent-label {
+    margin-left: 8px;
+    min-width: 50px;
+    font-weight: bold;
+    user-select: none;
+  }
+</style>
+</head>
+<header>Placard de Votações</header>
+<body>
+<!-- <h1>Placard de Votações</h1> -->
+<div id="main-container">
+
+  <div id="addOptionContainer">
+    <input type="text" id="addOptionInput" placeholder="Nova opção" />
+    <button id="addOptionBtn">Adicionar</button>
+  </div>
+
+  <div id="optionsContainer"></div>
+
+  <button id="clearVotesBtn">Limpar Votações</button>
+
+  <div id="results">
+    <h2>Resultados</h2>
+    <div id="resultsContainer"></div>
+  </div>
+</div>
+
+<script>
+  let votes = {
+    "Opção 1": 0,
+    "Opção 2": 0,
+    "Opção 3": 0
+  };
+
+  const optionsContainer = document.getElementById('optionsContainer');
+  const resultsContainer = document.getElementById('resultsContainer');
+  const addOptionInput = document.getElementById('addOptionInput');
+  const addOptionBtn = document.getElementById('addOptionBtn');
+  const clearVotesBtn = document.getElementById('clearVotesBtn');
+
+  function renderOptions() {
+    optionsContainer.innerHTML = '';
+    const optionKeys = Object.keys(votes);
+    if (optionKeys.length === 0) {
+      optionsContainer.innerHTML = '<p><em>Adicione opções para votar.</em></p>';
+      updateResults();
+      return;
+    }
+
+    optionKeys.forEach((option) => {
+      const btn = document.createElement('button');
+      btn.className = 'vote-button';
+      btn.textContent = option;
+      btn.title = 'Clique para votar em ' + option;
+
+      btn.addEventListener('click', () => {
+        votes[option]++;
+        renderOptions();
+      });
+
+      // Botão de remover ao lado do botão principal
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'remove-btn';
+      removeBtn.textContent = 'X';
+      removeBtn.title = 'Remover opção ' + option;
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        delete votes[option];
+        renderOptions();
+      });
+
+      // Container para botão + remover juntos
+      const container = document.createElement('div');
+      container.style.display = 'flex';
+      container.style.alignItems = 'center';
+      container.style.gap = '10px';
+      container.appendChild(btn);
+      container.appendChild(removeBtn);
+
+      optionsContainer.appendChild(container);
+    });
+    updateResults();
+  }
+
+  function updateResults() {
+    resultsContainer.innerHTML = '';
+    const entries = Object.entries(votes);
+    if (entries.length === 0) {
+      resultsContainer.innerHTML = '<p><em>Sem opções para mostrar resultados.</em></p>';
+      return;
+    }
+
+    // Ordena por votos desc
+    entries.sort((a, b) => b[1] - a[1]);
+
+    const totalVotes = entries.reduce((sum, [, count]) => sum + count, 0);
+    const maxVotes = entries[0][1];
+
+    entries.forEach(([option, count]) => {
+      const percent = totalVotes ? ((count / totalVotes) * 100).toFixed(1) : 0;
+
+      const div = document.createElement('div');
+      div.className = 'result-item';
+
+      const label = document.createElement('div');
+      label.className = 'result-label';
+      if (count === maxVotes && maxVotes > 0) {
+        label.classList.add('highlight');
+      }
+      label.textContent = option;
+
+      const barContainer = document.createElement('div');
+      barContainer.className = 'bar-container';
+
+      const barFill = document.createElement('div');
+      barFill.className = 'bar-fill';
+      barFill.style.width = percent + '%';
+      barFill.textContent = count;
+      if (count === maxVotes && maxVotes > 0) {
+        barFill.classList.add('highlight');
+      }
+
+      const percentLabel = document.createElement('div');
+      percentLabel.className = 'percent-label';
+      percentLabel.textContent = percent + '%';
+
+      barContainer.appendChild(barFill);
+
+      div.appendChild(label);
+      div.appendChild(barContainer);
+      div.appendChild(percentLabel);
+
+      resultsContainer.appendChild(div);
+    });
+  }
+
+  addOptionBtn.addEventListener('click', () => {
+    const newOption = addOptionInput.value.trim();
+    if (newOption === '') {
+      alert('Por favor, insira o nome da nova opção.');
+      return;
+    }
+    if (votes.hasOwnProperty(newOption)) {
+      alert('Esta opção já existe.');
+      return;
+    }
+    votes[newOption] = 0;
+    addOptionInput.value = '';
+    renderOptions();
+  });
+
+  clearVotesBtn.addEventListener('click', () => {
+    for (const option in votes) {
+      votes[option] = 0;
+    }
+    renderOptions();
+  });
+
+  renderOptions();
+</script>
+
+</body>
+</html>
